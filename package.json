@@ -1,0 +1,10 @@
+{
+  "name": "music-gamification",
+  "private": true,
+  "type": "module",
+  "description": "Teoria de Bolso: jogos curtos de teoria musical para o celular",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  }
+}

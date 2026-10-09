@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <!-- colcheia: cabeça, haste e bandeira -->
+  <ellipse cx="208" cy="356" rx="74" ry="56" transform="rotate(-22 208 356)" fill="#fff"/>
+  <rect x="262" y="120" width="26" height="236" rx="10" fill="#fff"/>
+  <path d="M276 120 C 330 150 380 190 360 270 C 352 230 320 205 276 196 Z" fill="#fff"/>
+</svg>
