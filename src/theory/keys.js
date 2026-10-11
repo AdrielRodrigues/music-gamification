@@ -27,6 +27,13 @@ export function minorKeyIds(fsharp = 'F#') {
   return MINOR_IDS.map((id) => (id === 'D#m' && fsharp === 'Gb' ? 'Ebm' : id));
 }
 
+/** Grafia do tom de 6 acidentes conforme a preferência (F♯/D♯m ou G♭/E♭m); os demais não mudam. */
+export function spellKey(id, fsharp = 'F#') {
+  if (id === 'F#' || id === 'Gb') return fsharp === 'Gb' ? 'Gb' : 'F#';
+  if (id === 'D#m' || id === 'Ebm') return fsharp === 'Gb' ? 'Ebm' : 'D#m';
+  return id;
+}
+
 export function key(tonic, mode = 'major') {
   return { tonic, mode };
 }

@@ -10,9 +10,9 @@ export default {
   skill: 'Recordar',
   contexts: ['fila', 'espera'],
   description: 'Flashcards de todos os temas. Pense na resposta, toque para revelar e diga se acertou.',
-  why: 'Tirar a resposta da memória antes de vê-la fixa muito mais do que reler. O que você erra volta com mais frequência (repetição espaçada).',
+  why: 'Tirar a resposta da memória antes de vê-la fixa muito mais do que reler. As perguntas se revezam entre temas e tipos, então tudo volta com frequência.',
   setup: { themes: THEMES.map((t) => t.id), key: true },
-  generators: (c) => selectGenerators({ themes: c.themes, level: c.level, audio: false, fixedKey: c.key !== 'random' }),
+  generators: (c) => selectGenerators({ themes: c.themes, level: c.level, audio: false, key: c.key }),
 
   render(q, ui) {
     const reveal = h('button', { class: 'btn primary block', style: { marginTop: '24px' }, onclick: show }, 'Mostrar resposta');

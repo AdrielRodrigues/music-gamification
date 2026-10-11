@@ -12,6 +12,8 @@ const THEME = 'instrumento';
 const ROLE_NAMES = { R: 'Fundamental', 3: 'Terça', 5: 'Quinta' };
 const ROLE_INDEX = { R: 0, 3: 1, 5: 2 };
 
+const NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11];
+
 const pcLabel = (f, pc) => simpleSpellings(pc).map(f.N).join(' / ');
 
 export const openString = defineGenerator({
@@ -48,8 +50,9 @@ export const fretNote = defineGenerator({
 });
 
 export const findFret = defineGenerator({
-  id: 'inst.ondeNota', theme: THEME, level: 2, mc: true,
-  params: (ctx) => ({ string: pick(ctx.rng, GUITAR_STRINGS), pc: randInt(ctx.rng, 0, 11) }),
+  id: 'inst.ondeNota', theme: THEME, level: 1, mc: true,
+  // Básico: só notas naturais; a partir do intermediário, as 12.
+  params: (ctx) => ({ string: pick(ctx.rng, GUITAR_STRINGS), pc: (ctx.level || 1) >= 2 ? randInt(ctx.rng, 0, 11) : pick(ctx.rng, NATURAL_PCS) }),
   build({ string, pc }, ctx) {
     const f = fmt(ctx);
     const fret = mod(pc - pitchClass(openNote(string)), 12);
@@ -88,9 +91,10 @@ export const toneRole = defineGenerator({
 });
 
 export const shapeRole = defineGenerator({
-  id: 'inst.shape', theme: THEME, level: 2, mc: true,
+  id: 'inst.shape', theme: THEME, level: 1, mc: true,
   params(ctx) {
-    const shape = pick(ctx.rng, Object.keys(BARRE_SHAPES));
+    // Básico: só as pestanas maiores; a partir do intermediário, também as menores.
+    const shape = pick(ctx.rng, (ctx.level || 1) >= 2 ? Object.keys(BARRE_SHAPES) : ['E-maj', 'A-maj']);
     const root = noteId(pickRootOrTonic(ctx));
     return { shape, root, dot: randInt(ctx.rng, 0, BARRE_SHAPES[shape].dots.length - 1) };
   },
@@ -149,7 +153,7 @@ export const keyboardBuild = defineGenerator({
 });
 
 export const keyboardName = defineGenerator({
-  id: 'inst.tecladoNomeie', theme: THEME, level: 2, mc: true,
+  id: 'inst.tecladoNomeie', theme: THEME, level: 1, mc: true,
   params: keyboardChordParams,
   build({ root, type, inversion }, ctx) {
     const f = fmt(ctx);

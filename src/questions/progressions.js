@@ -19,12 +19,20 @@ const PROG_LEVEL = {
   andaluza: 3,
 };
 
-/** Sorteia progressão + tom compatível (respeita o tom fixo da sessão). */
+/**
+ * Sorteia progressão + tom compatível. Com tom fixo, só progressões do modo
+ * dele; se nenhuma estiver liberada no nível (ex.: tom menor no básico),
+ * usa as mais fáceis daquele modo.
+ */
 function pickProgKey(ctx) {
-  let progs = PROGRESSIONS.filter((p) => PROG_LEVEL[p.id] <= (ctx.level || 1));
+  const level = ctx.level || 1;
+  let progs = PROGRESSIONS.filter((p) => PROG_LEVEL[p.id] <= level);
   if (ctx.key) {
-    const same = progs.filter((p) => p.mode === keyFromId(ctx.key).mode);
-    if (same.length) progs = same;
+    const mode = keyFromId(ctx.key).mode;
+    const sameMode = PROGRESSIONS.filter((p) => p.mode === mode);
+    const atLevel = sameMode.filter((p) => PROG_LEVEL[p.id] <= level);
+    const lowest = Math.min(...sameMode.map((p) => PROG_LEVEL[p.id]));
+    progs = atLevel.length ? atLevel : sameMode.filter((p) => PROG_LEVEL[p.id] === lowest);
   }
   const prog = pick(ctx.rng, progs);
   return { prog: prog.id, key: pickKey(ctx, [prog.mode]) };

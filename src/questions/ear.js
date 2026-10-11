@@ -10,11 +10,12 @@
  * (cadência), target = o que se quer reconhecer (pode ser repetido sozinho).
  */
 import {
-  FUNCTION_NAMES, harmonicField, intervalName, keyFromId, keyScale, parseInterval, semitones, TENDENCIES,
+  buildScale, FUNCTION_NAMES, harmonicField, intervalName, keyFromId, keyScale, MINOR_TENDENCIES, parseInterval,
+  semitones, TENDENCIES,
 } from '../theory/index.js';
 import { cadence, chordEvent, degreeMidi, noteEvent as note, rest } from './audioEvents.js';
 import { pick, randInt, sample } from '../core/rng.js';
-import { capitalize, defineGenerator, fmt, ord, pickKey } from './common.js';
+import { capitalize, defineGenerator, fmt, ord, pickKey, sessionModes } from './common.js';
 
 const THEME = 'ouvido';
 
@@ -41,7 +42,7 @@ function melody(ctx) {
 
 export const solfege = defineGenerator({
   id: 'ouvido.solfejo', theme: THEME, level: 1, mc: false,
-  params: (ctx) => ({ key: pickKey(ctx, (ctx.level || 1) >= 3 ? ['major', 'minor'] : ['major']), degrees: melody(ctx) }),
+  params: (ctx) => ({ key: pickKey(ctx, sessionModes(ctx, (ctx.level || 1) >= 3 ? ['major', 'minor'] : ['major'])), degrees: melody(ctx) }),
   build({ key: id, degrees }, ctx) {
     const f = fmt(ctx);
     const k = keyFromId(id);
@@ -75,18 +76,25 @@ export const tonicFifth = defineGenerator({
 
 export const tendency = defineGenerator({
   id: 'ouvido.tendencia', theme: THEME, level: 1, mc: true,
-  params: (ctx) => ({ key: pickKey(ctx, ['major']), degree: Number(pick(ctx.rng, Object.keys(TENDENCIES))) }),
+  params(ctx) {
+    const key = pickKey(ctx, sessionModes(ctx, ['major']));
+    const table = keyFromId(key).mode === 'minor' ? MINOR_TENDENCIES : TENDENCIES;
+    return { key, degree: Number(pick(ctx.rng, Object.keys(table))) };
+  },
   build({ key: id, degree }, ctx) {
     const f = fmt(ctx);
     const k = keyFromId(id);
-    const scale = keyScale(k);
-    const t = TENDENCIES[degree];
+    const minor = k.mode === 'minor';
+    const t = (minor ? MINOR_TENDENCIES : TENDENCIES)[degree];
+    // A sensível do menor é o 7º elevado (menor harmônica).
+    const scale = t.raised ? buildScale(k.tonic, 'harmonicMinor') : keyScale(k);
+    const from = degreeMidi(k, degree) + (t.raised ? 1 : 0);
     return {
-      prompt: `Na escala maior, o ${ord(degree)} grau é instável. Para qual grau ele tende a ir?`,
+      prompt: `Na escala ${minor ? 'menor' : 'maior'}, o ${ord(degree)} grau${t.raised ? ' (sensível)' : ''} é instável. Para qual grau ele tende a ir?`,
       answer: `${ord(t.to)} grau`,
       explanation: `${capitalize(t.why)}. Em ${f.K(k)}: ${f.N(scale[degree - 1])} → ${f.N(scale[t.to - 1])}.`,
       choices: ['1º grau', '3º grau', '5º grau'],
-      audio: { intro: cadence(k), target: [note(degreeMidi(k, degree), 0.9), note(degreeMidi(k, degree === 7 ? 8 : t.to), 1.2)] },
+      audio: { intro: cadence(k), target: [note(from, 0.9), note(degreeMidi(k, degree === 7 ? 8 : t.to), 1.2)] },
     };
   },
 });
@@ -100,11 +108,15 @@ export const tension = defineGenerator({
   build({ key: id, degree }, ctx) {
     const f = fmt(ctx);
     const k = keyFromId(id);
-    const d = harmonicField(k)[degree - 1];
+    // No menor, o V maior da menor harmônica: é a sensível (terça dele) que cria a tensão,
+    // e é ele que a cadência de introdução toca.
+    const d = harmonicField(k, { harmonicV: true })[degree - 1];
+    const harmonicV = k.mode === 'minor' && degree === 5;
     return {
       prompt: `Em ${f.K(k)}, o acorde ${f.C(d.chord)} (${d.roman}) soa como repouso, afastamento ou tensão?`,
       answer: FEEL[d.func],
-      explanation: `${d.roman} tem função de ${FUNCTION_NAMES[d.func]}: ${FEEL_WHY[d.func]}.`,
+      explanation: `${d.roman} tem função de ${FUNCTION_NAMES[d.func]}: ${FEEL_WHY[d.func]}.`
+        + (harmonicV ? ' Em tom menor, o V é maior (vem da menor harmônica): a terça dele é a sensível, que puxa para a tônica.' : ''),
       choices: Object.values(FEEL),
       audio: { intro: cadence(k), target: [chordEvent(d.chord, 1.4)] },
     };

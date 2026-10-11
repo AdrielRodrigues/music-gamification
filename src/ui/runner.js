@@ -3,7 +3,7 @@
  *   configuração → perguntas (com cronômetro) → resumo.
  *
  * Cada app só precisa saber desenhar UMA pergunta (app.render) e avisar
- * se o usuário acertou (ui.done). Cronômetro, repetição espaçada,
+ * se o usuário acertou (ui.done). Cronômetro, sorteio das perguntas,
  * estatísticas, feedback e resumo ficam aqui.
  */
 import { add, h, topBar } from './dom.js';
@@ -52,7 +52,7 @@ export function runApp(root, app, { state, save }, query = {}) {
     };
     let session;
     try {
-      session = createSession({ generators: app.generators(config), ctx, srs: state.srs });
+      session = createSession({ generators: app.generators(config), ctx });
     } catch (err) {
       root.replaceChildren(topBar(app.title), h('div', { class: 'card' }, h('p', {}, err.message), h('a', { class: 'btn', href: '#/' }, 'Voltar')));
       return;

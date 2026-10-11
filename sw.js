@@ -7,7 +7,7 @@
  * Ao adicionar um arquivo ao app, inclua-o em ASSETS (um teste confere isso)
  * e aumente VERSION para forçar a atualização do cache.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `teoria-de-bolso-${VERSION}`;
 
 const ASSETS = [
@@ -33,7 +33,6 @@ const ASSETS = [
   'src/core/progress.js',
   'src/core/rng.js',
   'src/core/session.js',
-  'src/core/srs.js',
   'src/core/storage.js',
   'src/core/weekKey.js',
   'src/questions/audioEvents.js',

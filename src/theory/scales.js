@@ -41,3 +41,13 @@ export const TENDENCIES = {
   2: { to: 1, why: 'o 2º grau desce um tom até a tônica' },
   6: { to: 5, why: 'o 6º grau desce um tom até a dominante' },
 };
+
+/**
+ * No menor, só os graus de resolução inequívoca: o 2º fica de fora (está a
+ * 1 semitom do 3º e a 1 tom da tônica). O 7º é a sensível da menor harmônica.
+ */
+export const MINOR_TENDENCIES = {
+  7: { to: 1, why: 'a sensível (7º elevado da menor harmônica) fica a 1 semitom da tônica', raised: true },
+  6: { to: 5, why: 'o 6º grau menor fica a 1 semitom da dominante' },
+  4: { to: 3, why: 'o 4º grau desce um tom até o 3º menor' },
+};

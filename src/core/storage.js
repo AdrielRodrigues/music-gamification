@@ -21,7 +21,6 @@ export function defaultState() {
   return {
     schemaVersion: SCHEMA_VERSION,
     settings: { ...DEFAULT_SETTINGS },
-    srs: {},
     stats: { app: {}, theme: {}, key: {}, themeKey: {}, genKey: {}, records: {} },
     days: {},
     weekKey: { active: false, key: null, startedAt: null, baseline: null, history: [] },
@@ -46,7 +45,6 @@ export function normalize(raw) {
   return {
     schemaVersion: SCHEMA_VERSION,
     settings: { ...d.settings, ...s.settings },
-    srs: { ...s.srs },
     stats: { ...d.stats, ...s.stats },
     days: { ...s.days },
     weekKey: { ...d.weekKey, ...s.weekKey },

@@ -7,9 +7,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GENERATORS, getGenerator, selectGenerators } from '../../src/questions/index.js';
 import { seeded } from '../../src/core/rng.js';
+import { createSession } from '../../src/core/session.js';
+import { APPS } from '../../src/apps/registry.js';
 import {
-  between, detectKey, fretPc, intervalId, keyFromId, keyScale, majorKeyIds, parseChord,
-  parseNote, pitchClass, relativeKey, toRomans,
+  between, detectKey, fretPc, harmonicField, intervalId, keyFromId, keyScale, majorKeyIds, minorKeyIds, MINOR_TENDENCIES,
+  parseChord, parseNote, pitchClass, relativeKey, spellKey, toRomans,
 } from '../../src/theory/index.js';
 
 const SEEDS = 300;
@@ -133,4 +135,108 @@ test('tom fixo da sessão é respeitado', () => {
     const q = getGenerator('campo.grauAcorde').make({ rng: seeded(1), level: 1, notation: 'anglo', fsharp: 'F#', key: id });
     assert.equal(q.keyId, id);
   }
+});
+
+// ---------- tom fixo maior e menor ----------
+
+test('Cartas e Relâmpago: com tom fixo, toda pergunta com tom sai nesse tom', () => {
+  for (const id of ['cartas', 'relampago']) {
+    const app = APPS.find((a) => a.id === id);
+    for (const key of [...minorKeyIds(), 'C', 'Bb', 'F#']) {
+      for (const level of [1, 2, 3]) {
+        const ctx = { rng: seeded(level), level, notation: 'latin', fsharp: 'F#', key };
+        const s = createSession({ generators: app.generators({ themes: app.setup.themes, level, key }), ctx });
+        for (let i = 0; i < 300; i++) {
+          const q = s.next();
+          if (q.keyId) assert.equal(q.keyId, key, `${id} N${level}: ${q.gen} → ${q.prompt}`);
+        }
+      }
+    }
+  }
+});
+
+test('tendência em tom menor: usa a tabela do menor, sem o 2º grau', () => {
+  for (const key of minorKeyIds()) {
+    for (let seed = 1; seed <= 40; seed++) {
+      const q = getGenerator('ouvido.tendencia').make({ rng: seeded(seed), level: 1, notation: 'latin', fsharp: 'F#', key });
+      const t = MINOR_TENDENCIES[q.params.degree];
+      assert.ok(t, `grau ${q.params.degree} em ${key}`);
+      assert.equal(q.answer, `${t.to}º grau`);
+      assert.match(q.prompt, /escala menor/);
+    }
+  }
+  // Sensível de Lá menor = Sol♯.
+  const q = getGenerator('ouvido.tendencia').make({ rng: seeded(1), notation: 'anglo', fsharp: 'F#', key: 'Am' }, { key: 'Am', degree: 7 });
+  assert.match(q.explanation, /G♯ → A/);
+});
+
+test('tétrades do campo menor: V7 da menor harmônica', () => {
+  const ctx = { rng: seeded(1), level: 2, notation: 'anglo', fsharp: 'F#', key: 'Am' };
+  const answers = [1, 2, 3, 4, 5, 6, 7].map((degree) => getGenerator('acordes.tetradeNoTom').make(ctx, { key: 'Am', degree }).answer);
+  assert.deepEqual(answers, ['Am7', 'Bm7(♭5)', 'Cmaj7', 'Dm7', 'E7', 'Fmaj7', 'G7']);
+});
+
+test('dominante secundário só entra com tom fixo maior (ou sem tom fixo)', () => {
+  const has = (key) => selectGenerators({ key }).some((g) => g.id === 'acordes.domSecundario');
+  assert.equal(has('Am'), false);
+  assert.equal(has('C'), true);
+  assert.equal(has('random'), true);
+  assert.equal(has(undefined), true);
+});
+
+// ---------- enarmonia F♯/G♭ e explicações ----------
+
+test('grafia do tom de 6 acidentes conforme a preferência', () => {
+  assert.equal(spellKey('F#', 'Gb'), 'Gb');
+  assert.equal(spellKey('Gb', 'F#'), 'F#');
+  assert.equal(spellKey('D#m', 'Gb'), 'Ebm');
+  assert.equal(spellKey('Ebm'), 'D#m');
+  assert.equal(spellKey('Db', 'Gb'), 'Db');
+});
+
+test('transposição nunca vai para o mesmo tom escrito de outro jeito', () => {
+  const cases = [
+    { key: 'F#', fsharp: 'Gb' }, { key: 'Gb', fsharp: 'F#' },
+    { key: 'D#m', fsharp: 'Gb' }, { key: 'Ebm', fsharp: 'F#' },
+  ];
+  for (const { key, fsharp } of cases) {
+    for (let seed = 1; seed <= 200; seed++) {
+      const q = getGenerator('prog.transpor').make({ rng: seeded(seed), level: 3, notation: 'anglo', fsharp, key });
+      const from = keyFromId(q.params.from);
+      const to = keyFromId(q.params.key);
+      assert.notEqual(pitchClass(from.tonic), pitchClass(to.tonic), q.prompt);
+    }
+  }
+});
+
+test('vizinho: a dica "não há tecla preta" só aparece quando o semitom atravessa Mi–Fá ou Si–Dó', () => {
+  const tip = /não há tecla preta/;
+  const ctx = { rng: seeded(1), level: 1, notation: 'latin', fsharp: 'F#', key: null };
+  for (const root of ['C', 'D', 'E', 'F', 'G', 'A', 'B']) {
+    for (const dir of ['up', 'down']) {
+      for (const size of ['st', 'T']) {
+        const q = getGenerator('notas.vizinho').make(ctx, { root, size, dir });
+        const expected = size === 'st' && (dir === 'up' ? ['E', 'B'] : ['F', 'C']).includes(root);
+        assert.equal(tip.test(q.explanation), expected, `${root} ${size} ${dir}: ${q.explanation}`);
+        // Quando a dica aparece, a resposta é uma nota natural (tecla branca).
+        if (expected) assert.doesNotMatch(q.answer, /[♯♭]/);
+      }
+    }
+  }
+});
+
+test('tensão em tom menor: o V é maior (da harmônica), como na cadência', () => {
+  for (const key of minorKeyIds()) {
+    const ctx = { rng: seeded(1), level: 1, notation: 'anglo', fsharp: 'F#', key };
+    const q = getGenerator('ouvido.tensao').make(ctx, { key, degree: 5 });
+    const k = keyFromId(key);
+    const v = harmonicField(k, { harmonicV: true })[4].chord;
+    assert.equal(v.type, 'maj', key);
+    assert.match(q.prompt, /\(V\)/, q.prompt);
+    assert.equal(q.answer, 'Tensão');
+    // O acorde tocado é o mesmo V da cadência de introdução.
+    assert.deepEqual(q.audio.target[0].m, q.audio.intro[2].m, key);
+  }
+  const am = getGenerator('ouvido.tensao').make({ rng: seeded(1), notation: 'anglo', fsharp: 'F#', key: 'Am' }, { key: 'Am', degree: 5 });
+  assert.match(am.prompt, /acorde E \(V\)/);
 });

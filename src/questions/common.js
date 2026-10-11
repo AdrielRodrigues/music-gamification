@@ -5,17 +5,18 @@
  *   {
  *     id, theme, level, mc,          // mc = tem alternativas (múltipla escolha)
  *     audioOnly?,                     // só faz sentido com som (Ouvido)
+ *     modes?,                         // só funciona nesses modos ('major'/'minor') de tom fixo
  *     params(ctx) → params,           // sorteia os parâmetros (tom, grau…)
  *     build(params, ctx) → { prompt, answer, explanation, choices?, data?, audio? }
  *   }
- * Os parâmetros determinam a pergunta por completo. Por isso a repetição
- * espaçada guarda só { gen, params } e consegue recriar o item depois.
+ * Os parâmetros determinam a pergunta por completo: { gen, params } vira o
+ * itemKey, que identifica a pergunta (evita repeti-la na sessão e agrupa erros).
  *
  * ctx = { rng, notation: 'latin'|'anglo', fsharp: 'F#'|'Gb', key: id|null, level: 1..3 }
  */
 import {
   formatChord, formatNote, keyFromId, keyId, keyLabel, keySignature, majorKeyIds, minorKeyIds,
-  parseNote, relativeKey,
+  parseNote, pitchClass, relativeKey,
 } from '../theory/index.js';
 import { pick, sample, shuffle } from '../core/rng.js';
 
@@ -64,11 +65,21 @@ export function pickKey(ctx, modes = ['major', 'minor']) {
   return pick(ctx.rng, ids);
 }
 
-/** Outro tom do mesmo modo, diferente de `id` (para transposição). */
+/**
+ * Modos para o sorteio do tom: com tom fixo, aceita o modo dele (o gerador
+ * precisa saber tratar maior e menor); sem tom fixo, os modos do nível.
+ */
+export const sessionModes = (ctx, levelModes) => (ctx.key ? ['major', 'minor'] : levelModes);
+
+/**
+ * Outro tom do mesmo modo, com outra tônica (para transposição). Compara a
+ * altura, não o nome: G♭ não é "outro tom" de F♯.
+ */
 export function pickOtherKey(ctx, id) {
   const k = keyFromId(id);
+  const pc = pitchClass(k.tonic);
   const ids = (k.mode === 'major' ? majorKeyIds(ctx.fsharp) : minorKeyIds(ctx.fsharp))
-    .filter((x) => x !== id && Math.abs(keySignature(keyFromId(x))) <= MAX_ACCIDENTALS[ctx.level || 1]);
+    .filter((x) => pitchClass(keyFromId(x).tonic) !== pc && Math.abs(keySignature(keyFromId(x))) <= MAX_ACCIDENTALS[ctx.level || 1]);
   return pick(ctx.rng, ids);
 }
 

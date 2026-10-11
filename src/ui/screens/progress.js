@@ -3,7 +3,6 @@ import { add, h, percent, topBar } from '../dom.js';
 import { APPS } from '../../apps/registry.js';
 import { THEMES } from '../../questions/index.js';
 import { lastDays, rate, streak, totals } from '../../core/progress.js';
-import { boxCounts } from '../../core/srs.js';
 import { keyFromId, keyLabel, majorKeyIds, minorKeyIds } from '../../theory/index.js';
 
 function bars(rows) {
@@ -29,7 +28,6 @@ export function renderProgress(root, { state }) {
   const all = totals(state);
   const days = lastDays(state.days, Date.now(), 14);
   const maxDay = Math.max(1, ...days.map((d) => d.answered));
-  const boxes = boxCounts(state.srs);
 
   // Tons com pelo menos uma resposta (maiores sempre aparecem).
   const keys = [...majorKeyIds(state.settings.fsharp), ...minorKeyIds(state.settings.fsharp).filter((k) => st.key[k])];
@@ -70,9 +68,5 @@ export function renderProgress(root, { state }) {
     h('h2', {}, 'Tema × tom'),
     h('p', { class: 'small muted' }, 'Onde você está forte (verde) e fraco (vermelho). Célula vazia = ainda não treinou.'),
     h('div', { class: 'card', style: { overflowX: 'auto' } }, heat),
-
-    h('h2', {}, 'Repetição espaçada'),
-    h('div', { class: 'card' },
-      h('p', { class: 'small' }, `Itens em cada caixa (1 = volta sempre, 5 = já sabe): ${Object.entries(boxes).map(([b, n]) => `${b}: ${n}`).join(' · ')}`)),
   );
 }

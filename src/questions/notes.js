@@ -68,7 +68,8 @@ export const neighbor = defineGenerator({
     const step = (size === 'T' ? 2 : 1) * (dir === 'up' ? 1 : -1);
     const pc = pitchClass(r) + step;
     const pool = [-3, -2, -1, 1, 2, 3].map((d) => pcLabel(f, pc + d)).filter((x) => x !== pcLabel(f, pitchClass(r)));
-    const natural = ['E', 'F', 'B', 'C'].includes(root) && size === 'st';
+    // Só quando o semitom atravessa Mi–Fá ou Si–Dó (Mi/Si subindo, Fá/Dó descendo).
+    const natural = size === 'st' && (dir === 'up' ? ['E', 'B'] : ['F', 'C']).includes(root);
     return {
       prompt: `Qual nota está um ${size === 'T' ? 'tom' : 'semitom'} ${dir === 'up' ? 'acima' : 'abaixo'} de ${f.N(r)}?`,
       answer: pcLabel(f, pc),

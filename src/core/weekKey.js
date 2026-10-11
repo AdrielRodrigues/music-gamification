@@ -5,7 +5,7 @@
  * respostas dadas DESDE o início do foco (guarda-se uma "foto" dos
  * contadores no começo e compara-se com os atuais).
  */
-import { keyFromId, pitchClass, WEEK_ORDER } from '../theory/index.js';
+import { keyFromId, pitchClass, spellKey, WEEK_ORDER } from '../theory/index.js';
 import { rate } from './progress.js';
 
 /**
@@ -53,18 +53,21 @@ export function evaluateWeek(state) {
   return { criteria, mastered: criteria.every((c) => c.ok) };
 }
 
-/** Próximo tom da ordem sugerida (aceita grafia enarmônica: G♭ = F♯). */
-export function nextKey(key) {
+/**
+ * Próximo tom da ordem sugerida, na grafia preferida (F♯ ou G♭).
+ * Aceita grafia enarmônica na entrada: G♭ = F♯.
+ */
+export function nextKey(key, fsharp = 'F#') {
   const pc = pitchClass(keyFromId(key).tonic);
   const idx = WEEK_ORDER.findIndex((id) => pitchClass(keyFromId(id).tonic) === pc);
-  return WEEK_ORDER[(idx + 1) % WEEK_ORDER.length];
+  return spellKey(WEEK_ORDER[(idx + 1) % WEEK_ORDER.length], fsharp);
 }
 
 /** Marca o tom atual como dominado e já começa o próximo. */
 export function completeWeek(state, now = Date.now()) {
   const { key, startedAt, history = [] } = state.weekKey;
   state.weekKey.history = [...history, { key, startedAt, masteredAt: now }];
-  startWeek(state, nextKey(key), now);
+  startWeek(state, nextKey(key, state.settings?.fsharp), now);
 }
 
 export const daysSince = (ts, now = Date.now()) => Math.floor((now - ts) / 86400000);

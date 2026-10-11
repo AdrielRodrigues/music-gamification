@@ -30,13 +30,20 @@ export function shuffle(rng, list) {
 /** `n` itens distintos sorteados da lista. */
 export const sample = (rng, list, n) => shuffle(rng, list).slice(0, n);
 
-/** Sorteio ponderado: items = [{ item, weight }]. */
-export function weightedPick(rng, items) {
-  const total = items.reduce((s, x) => s + x.weight, 0);
-  let r = rng() * total;
-  for (const x of items) {
-    r -= x.weight;
-    if (r < 0) return x.item;
-  }
-  return items[items.length - 1]?.item;
+/**
+ * Baralho: cada item sai uma vez, em ordem aleatória; ao esgotar, reembaralha.
+ * Na virada não repete o último item sorteado (se houver mais de um).
+ */
+export function shuffleBag(rng, items) {
+  let deck = [];
+  let last;
+  return function draw() {
+    if (!deck.length) {
+      deck = shuffle(rng, items);
+      // O próximo a sair é o último da lista (pop).
+      if (deck.length > 1 && deck[deck.length - 1] === last) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]];
+    }
+    last = deck.pop();
+    return last;
+  };
 }

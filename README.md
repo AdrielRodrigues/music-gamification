@@ -8,7 +8,7 @@ HTML, CSS e JavaScript puros, sem dependências e sem build. Roda inteiro no nav
 
 | App | Tipo de treino | O que desenvolve |
 |---|---|---|
-| 🃏 **Cartas** | Recordar (flashcard + repetição espaçada) | Memória de escalas, campos, intervalos… (temas 1–6) |
+| 🃏 **Cartas** | Recordar (flashcards) | Memória de escalas, campos, intervalos… (temas 1–6) |
 | ⚡ **Relâmpago** | Velocidade (60 s, múltipla escolha) | Acesso instantâneo à teoria |
 | 🔎 **Detetive de Tom** | Aplicar | Descobrir o tom a partir de alguns acordes |
 | 🔀 **Transponha** | Aplicar | Levar uma cifra para outro tom ou para graus romanos |
@@ -52,7 +52,7 @@ css/style.css                             visual mobile-first (claro/escuro)
 src/theory/      teoria musical PURA (sem DOM): notas, intervalos, escalas,
                  acordes, campos harmônicos, progressões, braço e teclado
 src/questions/   geradores de perguntas a partir das regras de teoria
-src/core/        repetição espaçada, sessão, progresso, Tom da Semana, storage
+src/core/        sessão (sorteio equilibrado), progresso, Tom da Semana, storage
 src/ui/          DOM, roteamento, áudio (Web Audio), componentes e telas
 src/apps/        os 9 treinos; registry.js monta o menu
 tests/           testes com node:test
@@ -60,7 +60,7 @@ tests/           testes com node:test
 
 **Enarmonia:** as notas guardam a letra (`{ letter, acc }`), não só a altura. Escalas e intervalos são construídos letra por letra, então Fá maior tem Si♭, a 3ª maior de Sol♯ é Si♯ e a transposição respeita a grafia do tom de destino.
 
-**Perguntas geradas, não fixas:** cada gerador sorteia parâmetros (tom, grau, intervalo…) e calcula a resposta pela teoria. A repetição espaçada guarda só `{ gerador, parâmetros }` e recria a pergunta quando ela precisa voltar.
+**Perguntas geradas, não fixas:** cada gerador sorteia parâmetros (tom, grau, intervalo…) e calcula a resposta pela teoria. A sessão reveza os temas e, dentro de cada tema, os tipos de pergunta como num baralho: cada um sai uma vez antes de repetir.
 
 ### Criar um treino novo
 

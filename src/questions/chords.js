@@ -7,7 +7,7 @@ import {
   parseNote, secondaryDominant, simpleSpellings, pitchClass,
 } from '../theory/index.js';
 import { pick, randInt } from '../core/rng.js';
-import { choicesFrom, defineGenerator, fmt, ord, pickKey, pickRootOrTonic, retry } from './common.js';
+import { choicesFrom, defineGenerator, fmt, ord, pickKey, pickRootOrTonic, retry, sessionModes } from './common.js';
 
 const THEME = 'acordes';
 
@@ -115,18 +115,19 @@ export const seventhByDegree = defineGenerator({
 
 export const seventhInKey = defineGenerator({
   id: 'acordes.tetradeNoTom', theme: THEME, level: 2, mc: true,
-  params: (ctx) => ({ key: pickKey(ctx, ['major']), degree: randInt(ctx.rng, 1, 7) }),
+  params: (ctx) => ({ key: pickKey(ctx, sessionModes(ctx, ['major'])), degree: randInt(ctx.rng, 1, 7) }),
   build({ key: id, degree }, ctx) {
     const f = fmt(ctx);
     const k = keyFromId(id);
-    const field = harmonicField(k, { sevenths: true });
+    const minor = k.mode === 'minor';
+    const field = harmonicField(k, { sevenths: true, harmonicV: minor });
     const d = field[degree - 1];
     // Mesma fundamental com outro tipo de sétima: o erro mais comum.
     const pool = [...['7', 'maj7', 'm7', 'm7b5'].map((t) => f.C(chord(d.chord.root, t))), ...field.map((x) => f.C(x.chord))];
     return {
       prompt: `Em ${f.K(k)}, qual é a tétrade do ${ord(degree)} grau?`,
       answer: f.C(d.chord),
-      explanation: field.map((x) => `${x.roman} ${f.C(x.chord)}`).join(' · '),
+      explanation: field.map((x) => `${x.roman} ${f.C(x.chord)}`).join(' · ') + (minor ? ' (o V7 vem da menor harmônica)' : ''),
       choices: choicesFrom(ctx.rng, f.C(d.chord), pool),
     };
   },
@@ -155,7 +156,7 @@ export const inversionBass = defineGenerator({
 });
 
 export const secondaryDominantQ = defineGenerator({
-  id: 'acordes.domSecundario', theme: THEME, level: 3, mc: true,
+  id: 'acordes.domSecundario', theme: THEME, level: 3, mc: true, modes: ['major'],
   params: (ctx) => ({ key: pickKey(ctx, ['major']), target: pick(ctx.rng, [2, 3, 4, 5, 6]) }),
   build({ key: id, target }, ctx) {
     const f = fmt(ctx);

@@ -6,7 +6,7 @@
  * última configuração usada no app > padrões das Configurações.
  */
 import { chipToggles, h, segmented, topBar } from '../dom.js';
-import { keyFromId, keyLabel, majorKeyIds, minorKeyIds } from '../../theory/index.js';
+import { keyFromId, keyLabel, majorKeyIds, minorKeyIds, spellKey } from '../../theory/index.js';
 import { LEVELS, THEMES } from '../../questions/index.js';
 
 export function initialConfig(app, state, query) {
@@ -31,10 +31,13 @@ export function initialConfig(app, state, query) {
 function keySelect(state, value, onChange) {
   const notation = state.settings.notation;
   const opt = (id) => h('option', { value: id, selected: id === value }, keyLabel(keyFromId(id), notation));
+  // Se o tom em uso está na outra grafia (ex.: F♯ de um link ou de um Tom da Semana antigo
+  // com a preferência G♭), mostra ele no lugar do equivalente, em vez de cair em "Aleatório".
+  const withValue = (ids) => ids.map((id) => (value !== 'random' && spellKey(id) === spellKey(value) ? value : id));
   const sel = h('select', { onchange: (e) => onChange(e.target.value), 'aria-label': 'Tom' },
     h('option', { value: 'random', selected: value === 'random' }, 'Aleatório (misturar tons)'),
-    h('optgroup', { label: 'Maiores' }, majorKeyIds(state.settings.fsharp).map(opt)),
-    h('optgroup', { label: 'Menores' }, minorKeyIds(state.settings.fsharp).map(opt)));
+    h('optgroup', { label: 'Maiores' }, withValue(majorKeyIds(state.settings.fsharp)).map(opt)),
+    h('optgroup', { label: 'Menores' }, withValue(minorKeyIds(state.settings.fsharp)).map(opt)));
   return sel;
 }
 

@@ -1,7 +1,7 @@
 /** Tom da Semana: escolher o tom em foco, acompanhar metas e avançar. */
 import { add, h, percent, topBar } from '../dom.js';
 import { completeWeek, daysSince, evaluateWeek, nextKey, startWeek, stopWeek } from '../../core/weekKey.js';
-import { formatChord, harmonicField, keyFromId, keyLabel, keyScale, formatNote, majorKeyIds, WEEK_ORDER } from '../../theory/index.js';
+import { formatChord, harmonicField, keyFromId, keyLabel, keyScale, formatNote, majorKeyIds, spellKey, WEEK_ORDER } from '../../theory/index.js';
 
 export function renderWeekKey(root, ctx) {
   const { state, save } = ctx;
@@ -9,19 +9,20 @@ export function renderWeekKey(root, ctx) {
   const label = (id) => keyLabel(keyFromId(id), notation);
   const rerender = () => { root.replaceChildren(); renderWeekKey(root, ctx); };
   const wk = state.weekKey;
+  const fsharp = state.settings.fsharp;
 
   if (!wk.active) {
     const last = wk.history[wk.history.length - 1];
-    const suggestion = last ? nextKey(last.key) : WEEK_ORDER[0];
+    const suggestion = last ? nextKey(last.key, fsharp) : WEEK_ORDER[0];
     let chosen = suggestion;
-    const ids = majorKeyIds(state.settings.fsharp);
+    const ids = majorKeyIds(fsharp);
     const select = h('select', { onchange: (e) => { chosen = e.target.value; } },
       ids.map((id) => h('option', { value: id, selected: id === suggestion }, label(id))));
     add(root,
       topBar('Tom da Semana'),
       h('div', { class: 'card stack' },
         h('p', {}, 'Escolha um tom e foque nele até dominar: a escala, o campo harmônico, as progressões e o som dele no ouvido. Os treinos passam a usar esse tom por padrão.'),
-        h('p', { class: 'small muted' }, `Ordem sugerida (do mais simples ao mais difícil): ${WEEK_ORDER.map(label).join(', ')}.`),
+        h('p', { class: 'small muted' }, `Ordem sugerida (do mais simples ao mais difícil): ${WEEK_ORDER.map((id) => label(spellKey(id, fsharp))).join(', ')}.`),
         select,
         h('button', { class: 'btn primary block', onclick: () => { startWeek(state, chosen); save(); rerender(); } }, 'Começar')),
       wk.history.length
@@ -54,7 +55,7 @@ export function renderWeekKey(root, ctx) {
     ev.mastered
       ? h('div', { class: 'card', style: { marginTop: '14px' } },
         h('p', {}, `🏆 Você dominou ${label(wk.key)}!`),
-        h('button', { class: 'btn primary block', onclick: () => { completeWeek(state); save(); rerender(); } }, `Avançar para ${label(nextKey(wk.key))}`))
+        h('button', { class: 'btn primary block', onclick: () => { completeWeek(state); save(); rerender(); } }, `Avançar para ${label(nextKey(wk.key, fsharp))}`))
       : days >= 7
         ? h('p', { class: 'small muted', style: { marginTop: '10px' } }, 'Já passou uma semana: tudo bem continuar até bater as metas.')
         : null,

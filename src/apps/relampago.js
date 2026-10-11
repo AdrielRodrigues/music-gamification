@@ -15,7 +15,7 @@ export default {
   setup: { themes: ['notas', 'campo', 'progressoes', 'acordes', 'instrumento'], key: true },
   fixedSeconds: 60,
   replayInFeedback: false,
-  generators: (c) => selectGenerators({ themes: c.themes, level: c.level, mc: true, audio: false, fixedKey: c.key !== 'random' }),
+  generators: (c) => selectGenerators({ themes: c.themes, level: c.level, mc: true, audio: false, key: c.key }),
 
   render(q, ui) {
     add(ui.body, choiceButtons(q.choices, q.answer, (ok) => ui.done(ok, { auto: true })));
